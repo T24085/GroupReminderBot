@@ -313,29 +313,6 @@ async def announce_event(event_id: int, channel: discord.TextChannel, requester_
     conn.close()
 
 
-# --- Slash Command: Create Event ---
-@tree.command(name="event_create", description="Create a new event with title, time, and optional role mention")
-@app_commands.describe(title="Title of the event", when="When the event will happen (in your timezone)", role="Role to mention")
-async def create(interaction: discord.Interaction, title: str, when: str, role: discord.Role = None):
-    ...
-
-
-    counts = await compute_rsvp_counts(event_id)
-    rsvp_block = await format_rsvp_lines(counts)
-    when_txt = "recurring" if not when_utc else fmt_when_for_user(
-        datetime.fromisoformat(when_utc), "America/Chicago"
-    )
-    mention = f"<@&{role_id}>" if role_id else ""
-
-    embed = discord.Embed(
-        title=f"📅 {title}",
-        description=f"**When:** {when_txt}\n{mention}\n\n{rsvp_block}",
-        color=0x5b8cfa,
-    )
-    try:
-        await msg.edit(embed=embed)
-    except Exception:
-        pass
 
 
 class RSVPView(View):
@@ -357,7 +334,7 @@ class RSVPView(View):
         )
         conn.commit()
         conn.close()
-        await update_announcement_message(self.event_id)
+        await update_announcement_message(self.event_id, interaction.message)
         await interaction.response.send_message(f"✅ RSVP updated: **{status.upper()}**", ephemeral=True)
 
     @button(label="✅ Going", style=ButtonStyle.success, custom_id="rsvp_going")
